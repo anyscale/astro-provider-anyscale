@@ -115,6 +115,10 @@ jobs:
           ASTRO_ANYSCALE_PROVIDER_SERVICE_ID=$ID_CLEANED hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
         env:
           ANYSCALE_CLI_TOKEN: ${{ secrets.ANYSCALE_CLI_TOKEN }}
+          # Set these as repo variables to point integration tests at a compute config / image
+          # that exist on the Anyscale account; if unset, the example DAGs fall back to defaults.
+          ASTRO_ANYSCALE_COMPUTE_CONFIG: ${{ vars.ASTRO_ANYSCALE_COMPUTE_CONFIG }}
+          ASTRO_ANYSCALE_IMAGE_URI: ${{ vars.ASTRO_ANYSCALE_IMAGE_URI }}
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v6
         with:
