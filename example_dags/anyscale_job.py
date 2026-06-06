@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -5,6 +6,13 @@ from airflow import DAG
 from anyscale.job.models import JobQueueConfig, JobQueueExecutionMode, JobQueueSpec
 
 from anyscale_provider.operators.anyscale import SubmitAnyscaleJob
+
+# Integration tests run this example DAG against the Anyscale account tied to
+# ANYSCALE_CLI_TOKEN, so the compute config and image below must exist on that
+# account. Override them without editing this file via env vars (e.g. CI repo
+# variables): ASTRO_ANYSCALE_COMPUTE_CONFIG / ASTRO_ANYSCALE_IMAGE_URI.
+ANYSCALE_COMPUTE_CONFIG = os.getenv("ASTRO_ANYSCALE_COMPUTE_CONFIG") or "airflow-integration-testing:1"
+ANYSCALE_IMAGE_URI = os.getenv("ASTRO_ANYSCALE_IMAGE_URI") or "anyscale/image/airflow-integration-testing:1"
 
 default_args = {
     "owner": "airflow",
@@ -34,8 +42,8 @@ submit_anyscale_job = SubmitAnyscaleJob(
     task_id="submit_anyscale_job",
     conn_id=ANYSCALE_CONN_ID,
     name="AstroJobBasic",
-    image_uri="anyscale/image/airflow-integration-testing:1",
-    compute_config="airflow-integration-testing:1",
+    image_uri=ANYSCALE_IMAGE_URI,
+    compute_config=ANYSCALE_COMPUTE_CONFIG,
     working_dir=str(FOLDER_PATH),
     entrypoint="python ray-job.py",
     requirements=["requests", "pandas", "numpy", "torch"],
@@ -51,8 +59,8 @@ submit_anyscale_job_with_new_job_queue = SubmitAnyscaleJob(
     task_id="submit_anyscale_job_with_new_job_queue",
     conn_id=ANYSCALE_CONN_ID,
     name="AstroJobWithJobQueue",
-    image_uri="anyscale/image/airflow-integration-testing:1",
-    compute_config="airflow-integration-testing:1",
+    image_uri=ANYSCALE_IMAGE_URI,
+    compute_config=ANYSCALE_COMPUTE_CONFIG,
     working_dir=str(FOLDER_PATH),
     entrypoint="python ray-job.py",
     max_retries=1,
@@ -74,8 +82,8 @@ submit_anyscale_job_with_existing_job_queue = SubmitAnyscaleJob(
     task_id="submit_anyscale_job_with_existing_job_queue",
     conn_id=ANYSCALE_CONN_ID,
     name="AstroJobWithExistingJobQueue1",
-    image_uri="anyscale/image/airflow-integration-testing:1",
-    compute_config="airflow-integration-testing:1",
+    image_uri=ANYSCALE_IMAGE_URI,
+    compute_config=ANYSCALE_COMPUTE_CONFIG,
     working_dir=str(FOLDER_PATH),
     entrypoint="python ray-job.py",
     max_retries=1,
@@ -98,8 +106,8 @@ submit_another_anyscale_job_with_existing_job_queue = SubmitAnyscaleJob(
     task_id="submit_another_anyscale_job_with_existing_job_queue",
     conn_id=ANYSCALE_CONN_ID,
     name="AstroJobWithExistingJobQueue2",
-    image_uri="anyscale/image/airflow-integration-testing:1",
-    compute_config="airflow-integration-testing:1",
+    image_uri=ANYSCALE_IMAGE_URI,
+    compute_config=ANYSCALE_COMPUTE_CONFIG,
     working_dir=str(FOLDER_PATH),
     entrypoint="python ray-job.py",
     max_retries=1,

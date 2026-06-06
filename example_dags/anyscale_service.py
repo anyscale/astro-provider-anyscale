@@ -22,6 +22,10 @@ default_args = {
 ANYSCALE_CONN_ID = "anyscale_conn"
 service_id = os.getenv("ASTRO_ANYSCALE_PROVIDER_SERVICE_ID", {uuid.uuid4()})
 SERVICE_NAME = f"AstroService-CICD-{service_id}"
+# Must exist on the Anyscale account tied to ANYSCALE_CLI_TOKEN; override via env vars
+# ASTRO_ANYSCALE_COMPUTE_CONFIG / ASTRO_ANYSCALE_IMAGE_URI (e.g. CI repo variables).
+ANYSCALE_COMPUTE_CONFIG = os.getenv("ASTRO_ANYSCALE_COMPUTE_CONFIG") or "airflow-integration-testing:1"
+ANYSCALE_IMAGE_URI = os.getenv("ASTRO_ANYSCALE_IMAGE_URI") or "anyscale/image/airflow-integration-testing:1"
 
 dag = DAG(
     "sample_anyscale_service_workflow",
@@ -35,8 +39,8 @@ deploy_anyscale_service = RolloutAnyscaleService(
     task_id="rollout_anyscale_service",
     conn_id=ANYSCALE_CONN_ID,
     name=SERVICE_NAME,
-    image_uri="anyscale/image/airflow-integration-testing:1",
-    compute_config="airflow-integration-testing:1",
+    image_uri=ANYSCALE_IMAGE_URI,
+    compute_config=ANYSCALE_COMPUTE_CONFIG,
     working_dir="https://github.com/anyscale/docs_examples/archive/refs/heads/main.zip",
     applications=[{"import_path": "sentiment_analysis.app:model"}],
     requirements=["transformers", "requests", "pandas", "numpy", "torch"],
