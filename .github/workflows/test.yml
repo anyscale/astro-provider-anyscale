@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   Authorize:
     environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository && 'external' || 'internal' }}
@@ -29,6 +32,7 @@ jobs:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          persist-credentials: false
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: |
@@ -47,14 +51,17 @@ jobs:
           hatch -e tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }} run pip freeze
 
       - name: Test Anyscale against Airflow ${{ matrix.airflow-version }} and Python ${{ matrix.python-version }}
-        run: |
-          ID="${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.airflow-version }}"
-          # Service names must be no longer than 57 characters and can only contain alphanumeric characters, dashes, and underscores
-          ID_CLEANED=$(echo $ID | tr '.' '-' | tr '/' '-')  # Replace dots and forward slashes with hyphens so it is a valid Service name
-          echo $ID_CLEANED
-          ASTRO_ANYSCALE_PROVIDER_SERVICE_ID=$ID_CLEANED hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
         env:
           ANYSCALE_CLI_TOKEN: ${{ secrets.ANYSCALE_CLI_TOKEN }}
+          GH_WORKFLOW: ${{ github.workflow }}
+          PR_REF: ${{ github.event.pull_request.number || github.ref }}
+          AIRFLOW_VERSION: ${{ matrix.airflow-version }}
+        run: |
+          ID="${GH_WORKFLOW}-${PR_REF}-${AIRFLOW_VERSION}"
+          # Service names must be no longer than 57 characters and can only contain alphanumeric characters, dashes, and underscores
+          ID_CLEANED=$(echo "$ID" | tr '.' '-' | tr '/' '-')  # Replace dots and forward slashes with hyphens so it is a valid Service name
+          echo "$ID_CLEANED"
+          ASTRO_ANYSCALE_PROVIDER_SERVICE_ID="$ID_CLEANED" hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@5975040f7f7d40edaff8d784b576fd65ae95c073  # v5.5.5
