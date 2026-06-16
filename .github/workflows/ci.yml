@@ -1,40 +1,55 @@
-name: test
+name: CI
 
 on:
   push:
     branches: [ "main" ]
-  pull_request_target:
+  pull_request:
     branches: [ "main" ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  Authorize:
-    environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository && 'external' || 'internal' }}
+  Static-Check:
     runs-on: ubuntu-latest
     steps:
-      - run: true
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+      - run: pip3 install hatch
+      - run: hatch run tests.py3.11-2.9:static-check
 
-  Run-Integration-Tests:
-    needs: Authorize
+  Run-Unit-Tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
-        airflow-version: ["2.11", "3.1"]
+        python-version: ["3.10", "3.11", "3.12"]
+        airflow-version: ["2.7", "2.8", "2.9", "2.10", "2.11", "3.0", "3.1"]
+        exclude:
+          - python-version: "3.12"
+            airflow-version: "2.7"
+          - python-version: "3.12"
+            airflow-version: "2.8"
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          persist-credentials: false
+
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: |
             ~/.cache/pip
             .nox
-          key: integration-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.airflow-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('anyscale_provider/__init__.py') }}
+          key: unit-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.airflow-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('anyscale_provider/__init__.py') }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
@@ -48,18 +63,12 @@ jobs:
 
       - name: Test Anyscale against Airflow ${{ matrix.airflow-version }} and Python ${{ matrix.python-version }}
         run: |
-          ID="${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.airflow-version }}"
-          # Service names must be no longer than 57 characters and can only contain alphanumeric characters, dashes, and underscores
-          ID_CLEANED=$(echo $ID | tr '.' '-' | tr '/' '-')  # Replace dots and forward slashes with hyphens so it is a valid Service name
-          echo $ID_CLEANED
-          ASTRO_ANYSCALE_PROVIDER_SERVICE_ID=$ID_CLEANED hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
-        env:
-          ANYSCALE_CLI_TOKEN: ${{ secrets.ANYSCALE_CLI_TOKEN }}
+          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-cov
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@5975040f7f7d40edaff8d784b576fd65ae95c073  # v5.5.5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: integration
+          flags: unit
           files: coverage.xml
           fail_ci_if_error: false
