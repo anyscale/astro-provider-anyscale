@@ -2,12 +2,19 @@ import os
 from pathlib import Path
 
 import pytest
+
+# This import allows to view the Airflow version at runtime
+from airflow import __version__ as airflow_version
 from airflow.models import Connection
 from airflow.models.dagbag import DagBag
 from airflow.utils.db import create_default_connections
 from airflow.utils.session import create_session
+from packaging import version
 
 from tests.utils import test_dag
+
+# This constant stores the Airflow version at runtime
+AIRFLOW_VERSION = version.parse(airflow_version)
 
 # Correctly construct the example DAGs directory path
 EXAMPLE_DAGS_DIR = Path(__file__).parent.parent.parent / "example_dags"
@@ -32,7 +39,11 @@ def get_dags(dag_folder=None):
 
 @pytest.fixture(scope="module")
 def setup_airflow_db():
-    os.system("airflow db init")
+    if AIRFLOW_VERSION >= version.Version("3.0"):
+        os.system("airflow db migrate")
+    else:
+        os.system("airflow db init")
+
     conn_id = "anyscale_conn"
     # Explicitly create the tables if necessary
     create_default_connections()
