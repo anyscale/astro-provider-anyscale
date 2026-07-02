@@ -195,7 +195,7 @@ To disable usage stats collection, set the configuration `anyscale.telemetry_ena
 _________
 
 We follow [Semantic Versioning](https://semver.org/) for releases.
-Check [CHANGELOG.rst](https://github.com/astronomer/astro-provider-anyscale/blob/main/docs/CHANGELOG.rst)
+Check [CHANGELOG.rst](https://github.com/anyscale/astro-provider-anyscale/blob/main/docs/CHANGELOG.rst)
 for the latest changes.
 
 
@@ -204,4 +204,4 @@ ______________________
 
 All contributions, bug reports, bug fixes, documentation improvements, enhancements are welcome.
 
-A detailed overview an how to contribute can be found in the [Contributing Guide](https://github.com/astronomer/astro-provider-anyscale/blob/main/docs/CONTRIBUTING.rst)
+A detailed overview an how to contribute can be found in the [Contributing Guide](https://github.com/anyscale/astro-provider-anyscale/blob/main/docs/CONTRIBUTING.rst)
