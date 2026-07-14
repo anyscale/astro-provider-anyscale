@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "astro-provider-anyscale"
-authors = [{ name = "Astronomer", email = "humans@astronomer.io" }]
+authors = [{ name = "Anyscale", email = "abhi@anyscale.com" }]
 license = { text = "Apache License 2.0" }
-description = "An Apache Airflow provider package built by Astronomer to integrate with Anyscale."
+description = "An Apache Airflow provider package to integrate with Anyscale SDK."
 classifiers = [
     "Framework :: Apache Airflow",
     "Framework :: Apache Airflow :: Provider",
@@ -28,8 +28,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://astronomer.io"
-Source = "https://github.com/astronomer/astro-provider-anyscale/"
+Homepage = "https://anyscale.com"
+Source = "https://github.com/anyscale/astro-provider-anyscale/"
 
 [project.readme]
 file = "README.md"
